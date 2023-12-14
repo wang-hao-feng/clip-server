@@ -5,10 +5,19 @@ from PIL import Image
 from functions import Functions
 from exception import ConnectClosedException
 
+import transformers
 
 class Server():
-    def __init__(self, device, host, port) -> None:
-        self.functions = Functions(device)
+    def __init__(self, 
+                 device, 
+                 host, 
+                 port, 
+                 model_params_root:str='./model_params', 
+                 models_path:dict={
+                     'CLIP': ('clip-vit-large-patch14-336', transformers.CLIPModel), 
+                     'InstructBlip': ('instructblip-vicuna-13b', transformers.InstructBlipForConditionalGeneration), 
+                 }) -> None:
+        self.functions = Functions(device, model_params_root, models_path)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((host, port))
         self.socket.listen(100)
