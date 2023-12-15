@@ -2,8 +2,8 @@ import json
 import torch
 import socket
 from PIL import Image
-from functions import Functions
-from exception import ConnectClosedException
+from .functions import Functions
+from .exception import ConnectClosedException
 
 import transformers
 

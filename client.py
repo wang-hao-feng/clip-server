@@ -1,7 +1,7 @@
 import json
 import socket
 from PIL import Image
-from exception import ConnectClosedException
+from .exception import ConnectClosedException
 
 class Client():
     def __init__(self, 
