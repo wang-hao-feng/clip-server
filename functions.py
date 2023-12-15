@@ -3,20 +3,19 @@ from PIL import Image
 
 import torch
 import transformers
-from transformers import AutoProcessor
 
 class Functions():
     def __init__(self, 
                  device, 
                  model_params_root:str='./model_params', 
                  models_path:dict={
-                     'CLIP': ('clip-vit-large-patch14-336', transformers.CLIPModel), 
-                     'InstructBlip': ('instructblip-vicuna-13b', transformers.InstructBlipForConditionalGeneration), 
+                     'CLIP': ('clip-vit-large-patch14-336', transformers.CLIPModel, transformers.CLIPProcessor), 
+                     'InstructBlip': ('instructblip-flan-t5-xl', transformers.InstructBlipForConditionalGeneration, transformers.InstructBlipProcessor), 
                  }):
         self.device = device
         self.models = {}
         self.processors = {}
-        for model_name, (model_path, model_class) in models_path.items():
+        for model_name, (model_path, model_class, processor_class) in models_path.items():
             self.models[model_name] = model_class.from_pretrained(
                 os.path.join(model_params_root, model_path), 
                 load_in_4bit=True, 
@@ -24,7 +23,7 @@ class Functions():
                 bnb_4bit_use_double_quant=True,
                 bnb_4bit_compute_dtype=torch.bfloat16
             ).eval()
-            self.processors[model_name] = AutoProcessor.from_pretrained(
+            self.processors[model_name] = processor_class.from_pretrained(
                 os.path.join(model_params_root, model_path)
             )
     
@@ -63,7 +62,7 @@ class Functions():
                 length_penalty=1.0, 
                 temperature=1, 
             )
-            generated_text = processor.decode(outputs, skip_special_tokens=True)[0].strip()
+            generated_text = processor.batch_decode(outputs, skip_special_tokens=True)[0].strip()
         return generated_text
 
 if __name__ == '__main__':

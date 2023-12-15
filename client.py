@@ -76,6 +76,11 @@ class Client():
         top_k_indices = self.decode_dict_msg(self.receive_msg())['top_k']
         return top_k_indices
 
+    def vqa(self, 
+            question:str, 
+            image:Image) -> str:
+        pass
+
 if __name__ == '__main__':
     host = '192.168.0.110'
     port = 12345

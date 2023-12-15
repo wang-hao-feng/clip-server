@@ -14,8 +14,8 @@ class Server():
                  port, 
                  model_params_root:str='./model_params', 
                  models_path:dict={
-                     'CLIP': ('clip-vit-large-patch14-336', transformers.CLIPModel), 
-                     'InstructBlip': ('instructblip-vicuna-13b', transformers.InstructBlipForConditionalGeneration), 
+                     'CLIP': ('clip-vit-large-patch14-336', transformers.CLIPModel, transformers.CLIPProcessor), 
+                     'InstructBlip': ('instructblip-flan-t5-xl', transformers.InstructBlipForConditionalGeneration, transformers.InstructBlipProcessor), 
                  }) -> None:
         self.functions = Functions(device, model_params_root, models_path)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -116,7 +116,11 @@ class Server():
         logits_per_image = torch.cat([self.functions.retrieve(text, batch) for batch in image_batchs]).squeeze(1)
         sim_indices = logits_per_image.sort(descending=True).indices
         self.send_msg(self.encode_dict_msg({'top_k':sim_indices[:top_k].tolist()}), client_socket)
-        
+    
+    def vqa(self, 
+            client_socket:socket.socket, 
+            request:dict) -> None:
+        pass
 
 if __name__ == '__main__':
     host = '192.168.0.110'
