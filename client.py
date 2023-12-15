@@ -63,41 +63,61 @@ class Client():
     
     def retrieve(self, 
                  text:str, 
-                 images:list, 
+                 images:list[Image.Image], 
                  top_k:int=1, 
-                 batch_size=128) -> list:
+                 batch_size:int=128) -> list:
         self.send_operate('retrieve', 
                           image_num=len(images), 
                           top_k=top_k, 
                           batch_size=batch_size)
         self.send_msg(text.encode('utf-8'))
-        for i in range(len(images)):
-            self.send_image(images[i])
+        for image in images:
+            self.send_image(image)
         top_k_indices = self.decode_dict_msg(self.receive_msg())['top_k']
         return top_k_indices
 
     def vqa(self, 
-            question:str, 
-            image:Image) -> str:
-        pass
+            texts:list[str],  
+            images:list[Image.Image], 
+            batch_size:int=64) -> list[str]:
+        self.send_operate('vqa', 
+                          text_num=len(texts),
+                          image_num=len(images),  
+                          batch_size=batch_size)
+        for text in texts:
+            self.send_msg(text.encode('utf-8'))
+        for image in images:
+            self.send_image(image)
+        answers = self.decode_dict_msg(self.receive_msg())['answers']
+        return answers
 
 if __name__ == '__main__':
-    host = '192.168.0.110'
+    #host = '192.168.0.110'
+    host = 'localhost'
     port = 12345
     client = Client(host, port)
     
-    import os
-    import random
-    seed = 42
-    random.seed(seed)
-    root = 'E:\Pictures\pixiv'
-    img_num = 100
-    text = 'Which one has two girls?'
-    images_path = []
-    for _, _, files in os.walk(root):
-        images_path = random.sample(files, img_num)
-        break
-    images = [Image.open(os.path.join(root, path)) for path in images_path]
-    top_k_indices = client.retrieve(text, images, top_k=10)
-    for idx in top_k_indices:
-        images[idx].show()
+    # import os
+    # import random
+    # seed = 42
+    # random.seed(seed)
+    # root = 'E:\Pictures\pixiv'
+    # img_num = 100
+    # text = 'Which one has two girls?'
+    # images_path = []
+    # for _, _, files in os.walk(root):
+    #     images_path = random.sample(files, img_num)
+    #     break
+    # images = [Image.open(os.path.join(root, path)) for path in images_path]
+    # top_k_indices = client.retrieve(text, images, top_k=10)
+    # for idx in top_k_indices:
+    #     images[idx].show()
+    
+    import requests
+    url = "https://img1.baidu.com/it/u=3539595421,754041626&fm=253&fmt=auto&app=138&f=JPEG?w=889&h=500"
+    image = Image.open(requests.get(url, stream=True).raw).convert("RGB")
+    prompt = "Please describe this image"
+    images = [image] * 32
+    texts = [prompt] * 32
+    answers = client.vqa(texts, images, batch_size=16)
+    print(len(answers))

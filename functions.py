@@ -48,11 +48,11 @@ class Functions():
         logits_per_image = outputs.logits_per_image
         return logits_per_image.cpu()
     
-    def vqa(self, text:str, image:Image):
+    def vqa(self, texts:list[str], images:list[Image.Image]):
         model = self.models['InstructBlip']
         processor = self.processors['InstructBlip']
         
-        inputs = processor(text=text, images=image, return_tensors='pt', padding=True)
+        inputs = processor(text=texts, images=images, return_tensors='pt', padding=True)
         with torch.inference_mode():
             outputs = model.generate(
                 **inputs.to(self.device), 
@@ -62,7 +62,7 @@ class Functions():
                 length_penalty=1.0, 
                 temperature=1, 
             )
-            generated_text = processor.batch_decode(outputs, skip_special_tokens=True)[0].strip()
+            generated_text = processor.batch_decode(outputs, skip_special_tokens=True)
         return generated_text
 
 if __name__ == '__main__':
@@ -72,6 +72,7 @@ if __name__ == '__main__':
     image = Image.open(requests.get(url, stream=True).raw).convert("RGB")
     prompt = "Please describe this image"
     
+    batch_size = 64
     func = Functions(device=device)
-    output = func.vqa(text=prompt, image=image)
+    output = func.vqa(texts=[prompt] * batch_size, images=[image] * batch_size)
     print(output)

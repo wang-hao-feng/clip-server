@@ -120,10 +120,26 @@ class Server():
     def vqa(self, 
             client_socket:socket.socket, 
             request:dict) -> None:
-        pass
+        text_num = request['text_num']
+        image_num = request['image_num']
+        batch_size = request['batch_size']
+        texts = [self.receive_msg(client_socket).decode('utf-8') for _ in range(text_num)]
+        images = [self.receive_image(client_socket) for _ in range(image_num)]
+        text_batchs = [texts[i*batch_size:(i+1)*batch_size] for i in range(text_num // batch_size)]
+        if text_num % batch_size != 0:
+            text_batchs.append(texts[-(text_num%batch_size):])
+        image_batchs = [images[i*batch_size:(i+1)*batch_size] for i in range(image_num // batch_size)]
+        if image_num % batch_size != 0:
+            image_batchs.append(images[-(image_num%batch_size):])
+        
+        answers = []
+        for text_batch, image_batch in zip(text_batchs, image_batchs):
+            answers += self.functions.vqa(texts=text_batch, images=image_batch)
+        self.send_msg(self.encode_dict_msg({'answers':answers}), client_socket)
 
 if __name__ == '__main__':
-    host = '192.168.0.110'
+    #host = '192.168.0.110'
+    host = 'localhost'
     port = 12345
     device='cuda'
     server = Server(device, host, port)
