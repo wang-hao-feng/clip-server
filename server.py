@@ -114,8 +114,9 @@ class Server():
             image_batchs.append(images[-(image_num%batch_size):])
 
         logits_per_image = torch.cat([self.functions.retrieve(text, batch) for batch in image_batchs]).squeeze(1)
-        sim_indices = logits_per_image.sort(descending=True).indices
-        self.send_msg(self.encode_dict_msg({'top_k':sim_indices[:top_k].tolist()}), client_socket)
+        #sim_indices = logits_per_image.sort(descending=True).indices
+        #self.send_msg(self.encode_dict_msg({'top_k':sim_indices[:top_k].tolist()}), client_socket)
+        self.send_msg(self.encode_dict_msg({'logits_per_image':logits_per_image.tolist()}), client_socket)
     
     def vqa(self, 
             client_socket:socket.socket, 

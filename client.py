@@ -73,8 +73,9 @@ class Client():
         self.send_msg(text.encode('utf-8'))
         for image in images:
             self.send_image(image)
-        top_k_indices = self.decode_dict_msg(self.receive_msg())['top_k']
-        return top_k_indices
+        #top_k_indices = self.decode_dict_msg(self.receive_msg())['top_k']
+        logits_per_image = self.decode_dict_msg(self.receive_msg())['logits_per_image']
+        return logits_per_image
 
     def vqa(self, 
             texts:list[str],  
