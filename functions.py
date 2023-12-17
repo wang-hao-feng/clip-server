@@ -42,10 +42,17 @@ class Functions():
         model = self.models['CLIP']
         processor = self.processors['CLIP']
     
-        inputs = processor(text=text, images=images, return_tensors='pt', padding=True)
+        #inputs = processor(text=text, images=images, return_tensors='pt', padding=True).to(self.device)
+        image_inputs = processor(images=images, return_tensors='pt').to(self.device)
+        text_inputs = processor.tokenizer(text=text, return_tensors='pt', padding=True).to(self.device)
         with torch.inference_mode():
-            outputs = model(**inputs.to(self.device))
-        logits_per_image = outputs.logits_per_image
+            text_features = model.get_text_features(**text_inputs)
+            text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+            image_features = model.get_image_features(**image_inputs)
+            image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+            #outputs = model(**inputs)
+            logits_per_image = image_features @ text_features.t()
+        #logits_per_image = outputs.logits_per_image
         return logits_per_image.cpu()
     
     def vqa(self, texts:list[str], images:list[Image.Image]):
