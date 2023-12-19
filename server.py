@@ -110,8 +110,6 @@ class Server():
                  client_socket:socket.socket, 
                  request:dict) -> None:
         image_num = request['image_num']
-        if image_num == 0:
-            self.send_msg(self.encode_dict_msg({'logits_per_image':[]}), client_socket)
         top_k = request['top_k']
         batch_size = request['batch_size']
         text = self.receive_msg(client_socket).decode('utf-8')
