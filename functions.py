@@ -44,7 +44,7 @@ class Functions():
     
         #inputs = processor(text=text, images=images, return_tensors='pt', padding=True).to(self.device)
         image_inputs = processor(images=images, return_tensors='pt').to(self.device)
-        text_inputs = processor.tokenizer(text=text, return_tensors='pt', padding=True).to(self.device)
+        text_inputs = processor.tokenizer(text=text, return_tensors='pt', padding='longest', truncation=True).to(self.device)
         with torch.inference_mode():
             text_features = model.get_text_features(**text_inputs)
             text_features = text_features / text_features.norm(dim=-1, keepdim=True)

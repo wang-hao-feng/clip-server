@@ -3,4 +3,5 @@ model_params/
 final_dataset_images.zip
 run.bat
 model_params
-__pycache__/
+__pycache__
+__MACOSX/
