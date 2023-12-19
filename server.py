@@ -56,11 +56,16 @@ class Server():
     def receive_msg(self, 
                     client_socket:socket.socket) -> bytes:
         def receive(size):
-            msg = client_socket.recv(size)
-            if len(msg) == 0:
-                raise ConnectClosedException()
+            receive_size = 0
+            total_msg = bytes()
+            while receive_size < size:
+                msg = client_socket.recv(size)
+                if len(msg) == 0:
+                    raise ConnectClosedException()
+                total_msg += msg
+                receive_size += len(msg) if size > 1024 else size
             client_socket.sendall('ok'.encode('utf-8'))
-            return msg
+            return total_msg
         msg_size = self.decode_dict_msg(receive(1024))['msg_size']
         message = receive(msg_size)
         return message
