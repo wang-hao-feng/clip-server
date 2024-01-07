@@ -2,8 +2,8 @@ import json
 import torch
 import socket
 from PIL import Image
-from .functions import Functions
-from .exception import ConnectClosedException
+from functions import Functions
+from exception import ConnectClosedException
 
 import transformers
 
@@ -14,8 +14,9 @@ class Server():
                  port, 
                  model_params_root:str='./model_params', 
                  models_path:dict={
-                     'CLIP': ('clip-vit-large-patch14-336', transformers.CLIPModel, transformers.CLIPProcessor), 
-                     'InstructBlip': ('instructblip-flan-t5-xl', transformers.InstructBlipForConditionalGeneration, transformers.InstructBlipProcessor), 
+                     'retrieve': ('clip-vit-large-patch14-336', transformers.CLIPModel, transformers.CLIPProcessor), 
+                     #'InstructBlip': ('instructblip-flan-t5-xl', transformers.InstructBlipForConditionalGeneration, transformers.InstructBlipProcessor), 
+                     'vqa': ('llava-1.5-13b-hf', transformers.LlavaForConditionalGeneration, transformers.LlavaProcessor), 
                  }) -> None:
         self.functions = Functions(device, model_params_root, models_path)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -128,15 +129,15 @@ class Server():
             request:dict) -> None:
         text_num = request['text_num']
         image_num = request['image_num']
+        images_per_text = request['images_per_text']
         batch_size = request['batch_size']
         texts = [self.receive_msg(client_socket).decode('utf-8') for _ in range(text_num)]
         images = [self.receive_image(client_socket) for _ in range(image_num)]
         text_batchs = [texts[i*batch_size:(i+1)*batch_size] for i in range(text_num // batch_size)]
+        image_batchs = [images[sum(images_per_text[:i*batch_size]):sum(images_per_text[:(i+1)*batch_size])] for i in range(image_num // batch_size)]
         if text_num % batch_size != 0:
             text_batchs.append(texts[-(text_num%batch_size):])
-        image_batchs = [images[i*batch_size:(i+1)*batch_size] for i in range(image_num // batch_size)]
-        if image_num % batch_size != 0:
-            image_batchs.append(images[-(image_num%batch_size):])
+            image_batchs.append(images[-sum(images_per_text[-(text_num%batch_size)]):])
         
         answers = []
         for text_batch, image_batch in zip(text_batchs, image_batchs):

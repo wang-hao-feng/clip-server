@@ -80,10 +80,13 @@ class Client():
     def vqa(self, 
             texts:list[str],  
             images:list[Image.Image], 
+            images_per_text:list[int]=None, 
             batch_size:int=64) -> list[str]:
+        images_per_text = images_per_text or [1] * len(texts)
         self.send_operate('vqa', 
                           text_num=len(texts),
                           image_num=len(images),  
+                          images_per_text=images_per_text, 
                           batch_size=batch_size)
         for text in texts:
             self.send_msg(text.encode('utf-8'))
