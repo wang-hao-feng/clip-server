@@ -134,10 +134,15 @@ class Server():
         texts = [self.receive_msg(client_socket).decode('utf-8') for _ in range(text_num)]
         images = [self.receive_image(client_socket) for _ in range(image_num)]
         text_batchs = [texts[i*batch_size:(i+1)*batch_size] for i in range(text_num // batch_size)]
-        image_batchs = [images[sum(images_per_text[:i*batch_size]):sum(images_per_text[:(i+1)*batch_size])] for i in range(image_num // batch_size)]
         if text_num % batch_size != 0:
             text_batchs.append(texts[-(text_num%batch_size):])
-            image_batchs.append(images[-sum(images_per_text[-(text_num%batch_size)]):])
+        images_ = []
+        for image_num in images_per_text:
+            images_.append(images[:image_num])
+            images = images[image_num:]
+        image_batchs = [sum(images_[i*batch_size:(i+1)*batch_size], start=[]) for i in range(image_num // batch_size)]
+        if image_num % batch_size != 0:
+            image_batchs.append(sum(images_[-(image_num%batch_size):], start=[]))
         
         answers = []
         for text_batch, image_batch in zip(text_batchs, image_batchs):
@@ -145,6 +150,8 @@ class Server():
         self.send_msg(self.encode_dict_msg({'answers':answers}), client_socket)
 
 if __name__ == '__main__':
+    import os
+    os.environ['CUDA_LAUNCH_BLOCKING']='1'
     #host = '192.168.0.110'
     host = 'localhost'
     port = 12345
